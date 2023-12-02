@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -11,8 +11,93 @@ generator client {
 // Define your own datamodels here and run `yarn redwood prisma migrate dev`
 // to create migrations for them and apply to your dev DB.
 // TODO: Please remove the following example:
-model UserExample {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+model User {
+  id            Int          @id @unique @default(autoincrement())
+  email         String       @unique
+  password      String
+  firstName     String
+  lastName      String
+  avatar        String
+  createdAt     DateTime
+  updatedAt     DateTime
+  role          Role
+  UserStatus    UserStatus[]
+  wishlist      WishList[]
+  pairings      Pairings[]
+  santaPairings Pairings[]   @relation(name: "santa")
+  thankYou      ThankYou[]
+  toUser        ThankYou[]   @relation(name: "toUser")
+}
+
+model UserStatus {
+  id      String       @id
+  eventId String
+  event   Event        @relation(fields: [eventId], references: [id])
+  userId  Int
+  user    User         @relation(fields: [userId], references: [id])
+  status  UserStatuses
+}
+
+model WishList {
+  id              Int      @id @default(autoincrement())
+  name            String
+  url             String
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+  createdAt       DateTime
+  updatedAt       DateTime
+  order           Int
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id])
+  siteImage       String
+  siteTitle       String
+  siteDescription String
+}
+
+model Event {
+  id           String       @id
+  name         String
+  date         DateTime
+  createdAt    DateTime
+  updatedAt    DateTime
+  sendReminder Boolean
+  userStatus   UserStatus[]
+  wishlist     WishList[]
+  pairings     Pairings[]
+  thankyou     ThankYou[]
+}
+
+model Pairings {
+  id        Int      @id
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  santaId   Int
+  santa     User     @relation(name: "santa", fields: [santaId], references: [id])
+  personId  Int
+  person    User     @relation(fields: [personId], references: [id])
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+model ThankYou {
+  id        String   @id
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  toUserId  Int
+  toUser    User     @relation(name: "toUser", fields: [toUserId], references: [id])
+  message   String
+  createdAt DateTime
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum UserStatuses {
+  INVITED
+  DECLINED
+  ACCEPTED
 }
